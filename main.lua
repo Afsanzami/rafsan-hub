@@ -1,20 +1,22 @@
+local allowedGameId = 12137249458  -- Replace with your real FPS Gun Grounds FFA PlaceId
+if game.PlaceId ~= allowedGameId then
+    return
+end
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
--- Helper for rainbow color
 local function getRainbowColor()
 	return Color3.fromHSV(tick() % 5 / 5, 1, 1)
 end
 
--- ScreenGui parent PlayerGui
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RafsanUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Icon button (R)
 local Icon = Instance.new("TextButton", ScreenGui)
 Icon.Text = "R"
 Icon.Size = UDim2.new(0, 50, 0, 50)
@@ -27,7 +29,6 @@ Icon.BorderSizePixel = 2
 Icon.BorderColor3 = Color3.fromRGB(255, 0, 0)
 Icon.ZIndex = 10
 
--- Main frame
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 300, 0, 350)
 Main.Position = UDim2.new(0.5, -150, 0.5, -175)
@@ -38,7 +39,6 @@ Main.Visible = false
 Main.Active = true
 Main.Draggable = true
 
--- Title bar
 local Title = Instance.new("TextLabel", Main)
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.Position = UDim2.new(0, 5, 0, 5)
@@ -50,7 +50,6 @@ Title.TextSize = 14
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BorderSizePixel = 0
 
--- Close button (X)
 local Close = Instance.new("TextButton", Main)
 Close.Size = UDim2.new(0, 30, 0, 30)
 Close.Position = UDim2.new(1, -35, 0, 7)
@@ -64,7 +63,6 @@ Close.MouseButton1Click:Connect(function()
 	Main.Visible = false
 end)
 
--- Tabs container
 local TabNames = {"ESP HACKES", "AIM HACKES", "VISUAL HACKES", "ABOUT"}
 local tabButtons = {}
 
@@ -90,7 +88,6 @@ end
 local offsetX = (300 - totalTabWidth + 5)/2
 TabContainer.Position = UDim2.new(0, offsetX, 0, 50)
 
--- Content container
 local Container = Instance.new("Frame", Main)
 Container.Size = UDim2.new(1, -10, 1, -100)
 Container.Position = UDim2.new(0, 5, 0, 85)
@@ -103,7 +100,6 @@ local function ClearContainer()
 	end
 end
 
--- Toggle creation helper
 local function createToggle(text, yPos, callback)
 	local Btn = Instance.new("TextButton", Container)
 	Btn.Size = UDim2.new(0.98, 0, 0, 30)
@@ -123,21 +119,17 @@ local function createToggle(text, yPos, callback)
 	return Btn
 end
 
--- ESP & Aimbot states
 local espGlow = false
 local espLine = false
 local espMiddle = false
 local espRainbow = false
 local espDots = false
-local espCircle = false
 local aimbotOn = false
 
 local highlights = {}
 local lines = {}
 local dots = {}
-local circle = nil
 
--- Clear ESP visuals
 local function clearHighlights()
 	for _, hl in pairs(highlights) do
 		if hl and hl.Parent then
@@ -161,14 +153,6 @@ local function clearDots()
 	dots = {}
 end
 
-local function clearCircle()
-	if circle then
-		circle:Remove()
-		circle = nil
-	end
-end
-
--- Update ESP Glow
 local function updateESPGlow()
 	clearHighlights()
 	if espGlow then
@@ -189,7 +173,6 @@ local function updateESPGlow()
 	end
 end
 
--- Update ESP Lines and Middle
 local function updateESPLines()
 	clearLines()
 	if not espLine and not espMiddle then return end
@@ -213,7 +196,6 @@ local function updateESPLines()
 	end
 end
 
--- Update ESP Dots/Balls
 local function updateESPDots()
 	clearDots()
 	if not espDots then return end
@@ -236,26 +218,6 @@ local function updateESPDots()
 	end
 end
 
--- Update ESP Circle (static center circle)
-local function updateESPCircle()
-	if espCircle then
-		if not circle then
-			circle = Drawing.new("Circle")
-			circle.Radius = 95 -- 190 diameter / 2
-			circle.Thickness = 2
-			circle.Filled = false
-			circle.Transparency = 1
-			circle.Color = espRainbow and getRainbowColor() or Color3.new(1, 1, 0)
-			circle.Visible = true
-		end
-		circle.Position = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
-		circle.Color = espRainbow and getRainbowColor() or Color3.new(1, 1, 0)
-	else
-		clearCircle()
-	end
-end
-
--- Aimbot: lock camera to nearest enemy head
 RunService.RenderStepped:Connect(function()
 	if aimbotOn then
 		local nearestHead = nil
@@ -277,10 +239,8 @@ RunService.RenderStepped:Connect(function()
 	updateESPGlow()
 	updateESPLines()
 	updateESPDots()
-	updateESPCircle()
 end)
 
--- Show ESP tab toggles
 local function ShowESPTab()
 	ClearContainer()
 	local features = {
@@ -301,15 +261,10 @@ local function ShowESPTab()
 			updateESPGlow()
 			updateESPLines()
 			updateESPDots()
-			updateESPCircle()
 		end},
 		{name = "ESP Dots (Balls)", callback = function(state)
 			espDots = state
 			updateESPDots()
-		end},
-		{name = "ESP Circle", callback = function(state)
-			espCircle = state
-			updateESPCircle()
 		end},
 	}
 	for i, feat in ipairs(features) do
@@ -317,7 +272,6 @@ local function ShowESPTab()
 	end
 end
 
--- Show AIM tab toggle
 local function ShowAIMTab()
 	ClearContainer()
 	createToggle("Aimbot", 0, function(state)
@@ -325,7 +279,6 @@ local function ShowAIMTab()
 	end)
 end
 
--- Show Visual tab (empty)
 local function ShowVisualTab()
 	ClearContainer()
 	local Label = Instance.new("TextLabel", Container)
@@ -340,7 +293,6 @@ end
 
 local aboutActive = false
 
--- Tab buttons behavior
 for name, btn in pairs(tabButtons) do
 	btn.MouseButton1Click:Connect(function()
 		if name == "ABOUT" then
@@ -385,11 +337,9 @@ for name, btn in pairs(tabButtons) do
 	end)
 end
 
--- Select ESP tab by default
 tabButtons["ESP HACKES"].BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 ShowESPTab()
 
--- Icon toggles main menu
 Icon.MouseButton1Click:Connect(function()
 	Main.Visible = not Main.Visible
 end)
