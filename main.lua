@@ -1,9 +1,12 @@
--- ESP Aimbot Gui (Original Design + Full Features, No Minimize button)
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
+
+-- Helper for rainbow color
+local function getRainbowColor()
+	return Color3.fromHSV(tick() % 5 / 5, 1, 1)
+end
 
 -- ScreenGui parent PlayerGui
 local ScreenGui = Instance.new("ScreenGui")
@@ -13,7 +16,6 @@ ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
 -- Icon button (R)
 local Icon = Instance.new("TextButton", ScreenGui)
-Icon.Name = "IconBtn"
 Icon.Text = "R"
 Icon.Size = UDim2.new(0, 50, 0, 50)
 Icon.Position = UDim2.new(0, 20, 0, 220)
@@ -24,12 +26,9 @@ Icon.TextSize = 28
 Icon.BorderSizePixel = 2
 Icon.BorderColor3 = Color3.fromRGB(255, 0, 0)
 Icon.ZIndex = 10
-Icon.Active = true
-Icon.Draggable = true
 
--- Main Frame
+-- Main frame
 local Main = Instance.new("Frame", ScreenGui)
-Main.Name = "MainFrame"
 Main.Size = UDim2.new(0, 300, 0, 350)
 Main.Position = UDim2.new(0.5, -150, 0.5, -175)
 Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -39,9 +38,8 @@ Main.Visible = false
 Main.Active = true
 Main.Draggable = true
 
--- Title Bar
+-- Title bar
 local Title = Instance.new("TextLabel", Main)
-Title.Name = "TitleLabel"
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.Position = UDim2.new(0, 5, 0, 5)
 Title.Text = "(FPS)🔫 GUN GROUNDS FFA - MADE BY RAFSAN ZAMI"
@@ -52,9 +50,8 @@ Title.TextSize = 14
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BorderSizePixel = 0
 
--- Close Button (X)
+-- Close button (X)
 local Close = Instance.new("TextButton", Main)
-Close.Name = "CloseBtn"
 Close.Size = UDim2.new(0, 30, 0, 30)
 Close.Position = UDim2.new(1, -35, 0, 7)
 Close.Text = "X"
@@ -63,74 +60,50 @@ Close.TextColor3 = Color3.fromRGB(255, 255, 255)
 Close.Font = Enum.Font.SourceSansBold
 Close.TextSize = 14
 Close.BorderSizePixel = 0
+Close.MouseButton1Click:Connect(function()
+	Main.Visible = false
+end)
 
--- Tabs Container
+-- Tabs container
+local TabNames = {"ESP HACKES", "AIM HACKES", "VISUAL HACKES", "ABOUT"}
+local tabButtons = {}
+
 local TabContainer = Instance.new("Frame", Main)
-TabContainer.Name = "TabContainer"
 TabContainer.Size = UDim2.new(1, -10, 0, 30)
 TabContainer.Position = UDim2.new(0, 5, 0, 50)
 TabContainer.BackgroundTransparency = 1
 
--- Tabs
-local TabNames = {"ESP HACKES", "AIM HACKES", "VISUAL HACKES", "ABOUT"}
-local tabButtons = {}
-
 local totalTabWidth = 0
 for i, name in ipairs(TabNames) do
-	local TabBtn = Instance.new("TextButton", TabContainer)
-	TabBtn.Name = name:gsub("%s", "") .. "Btn"
-	TabBtn.Size = UDim2.new(0, 70, 1, 0)
-	TabBtn.Position = UDim2.new(0, (i - 1) * 75, 0, 0)
-	TabBtn.Text = name
-	TabBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	TabBtn.Font = Enum.Font.SourceSans
-	TabBtn.TextSize = 12
-	TabBtn.BorderSizePixel = 0
-	tabButtons[name] = TabBtn
+	local Tab = Instance.new("TextButton", TabContainer)
+	Tab.Size = UDim2.new(0, 70, 1, 0)
+	Tab.Position = UDim2.new(0, (i-1)*75, 0, 0)
+	Tab.Text = name
+	Tab.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	Tab.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Tab.Font = Enum.Font.SourceSans
+	Tab.TextSize = 12
+	Tab.BorderSizePixel = 0
+	tabButtons[name] = Tab
 	totalTabWidth = totalTabWidth + 70 + 5
 end
-
-local offsetX = (300 - totalTabWidth + 5) / 2
+local offsetX = (300 - totalTabWidth + 5)/2
 TabContainer.Position = UDim2.new(0, offsetX, 0, 50)
 
--- Content Container
-local Container = Instance.new("ScrollingFrame", Main)
-Container.Name = "ContentContainer"
+-- Content container
+local Container = Instance.new("Frame", Main)
 Container.Size = UDim2.new(1, -10, 1, -100)
 Container.Position = UDim2.new(0, 5, 0, 85)
 Container.BackgroundTransparency = 1
-Container.BorderSizePixel = 0
-Container.ScrollBarThickness = 6
-Container.CanvasSize = UDim2.new(0, 0, 0, 0)
 Container.ClipsDescendants = true
-Container.VerticalScrollBarInset = Enum.ScrollBarInset.Always
 
--- Variables for toggles
-local espGlow = false
-local espLine = false
-local espMiddle = false
-local espDots = false
-local espCircle = false
-local espRainbow = false
-local aimbotOn = false
-
--- Store ESP highlights, lines, dots, circle
-local highlights = {}
-local lines = {}
-local dots = {}
-local circle = nil
-
--- Clear children function
 local function ClearContainer()
 	for _, child in pairs(Container:GetChildren()) do
-		if child:IsA("TextButton") then
-			child:Destroy()
-		end
+		child:Destroy()
 	end
 end
 
--- Create toggle button helper (with padding)
+-- Toggle creation helper
 local function createToggle(text, yPos, callback)
 	local Btn = Instance.new("TextButton", Container)
 	Btn.Size = UDim2.new(0.98, 0, 0, 30)
@@ -150,12 +123,21 @@ local function createToggle(text, yPos, callback)
 	return Btn
 end
 
--- Update rainbow color helper
-local function getRainbowColor()
-	return Color3.fromHSV((tick() * 0.5) % 1, 1, 1)
-end
+-- ESP & Aimbot states
+local espGlow = false
+local espLine = false
+local espMiddle = false
+local espRainbow = false
+local espDots = false
+local espCircle = false
+local aimbotOn = false
 
--- Clear highlights
+local highlights = {}
+local lines = {}
+local dots = {}
+local circle = nil
+
+-- Clear ESP visuals
 local function clearHighlights()
 	for _, hl in pairs(highlights) do
 		if hl and hl.Parent then
@@ -165,7 +147,6 @@ local function clearHighlights()
 	highlights = {}
 end
 
--- Clear lines
 local function clearLines()
 	for _, line in pairs(lines) do
 		line:Remove()
@@ -173,7 +154,6 @@ local function clearLines()
 	lines = {}
 end
 
--- Clear dots
 local function clearDots()
 	for _, dot in pairs(dots) do
 		dot:Remove()
@@ -181,7 +161,6 @@ local function clearDots()
 	dots = {}
 end
 
--- Remove circle
 local function clearCircle()
 	if circle then
 		circle:Remove()
@@ -189,7 +168,7 @@ local function clearCircle()
 	end
 end
 
--- Update ESP Glow highlights
+-- Update ESP Glow
 local function updateESPGlow()
 	clearHighlights()
 	if espGlow then
@@ -210,7 +189,7 @@ local function updateESPGlow()
 	end
 end
 
--- Update ESP Lines and Middle line
+-- Update ESP Lines and Middle
 local function updateESPLines()
 	clearLines()
 	if not espLine and not espMiddle then return end
@@ -225,7 +204,7 @@ local function updateESPLines()
 				line.Color = espRainbow and getRainbowColor() or Color3.new(1, 1, 0)
 				line.Visible = true
 				local fromX = camera.ViewportSize.X / 2
-				local fromY = espLine and 0 or camera.ViewportSize.Y / 2 -- espLine from top, espMiddle from center
+				local fromY = espLine and 0 or camera.ViewportSize.Y / 2
 				line.From = Vector2.new(fromX, fromY)
 				line.To = Vector2.new(pos.X, pos.Y)
 				table.insert(lines, line)
@@ -234,7 +213,7 @@ local function updateESPLines()
 	end
 end
 
--- Update ESP Dots (balls)
+-- Update ESP Dots/Balls
 local function updateESPDots()
 	clearDots()
 	if not espDots then return end
@@ -244,7 +223,7 @@ local function updateESPDots()
 			local pos, onScreen = camera:WorldToViewportPoint(root.Position)
 			if onScreen then
 				local dot = Drawing.new("Circle")
-				dot.Radius = 6
+				dot.Radius = 5
 				dot.Thickness = 2
 				dot.Filled = true
 				dot.Transparency = 1
@@ -269,7 +248,6 @@ local function updateESPCircle()
 			circle.Color = espRainbow and getRainbowColor() or Color3.new(1, 1, 0)
 			circle.Visible = true
 		end
-		-- Position at screen center
 		circle.Position = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
 		circle.Color = espRainbow and getRainbowColor() or Color3.new(1, 1, 0)
 	else
@@ -277,15 +255,7 @@ local function updateESPCircle()
 	end
 end
 
--- Update all ESP visuals per frame
-RunService.RenderStepped:Connect(function()
-	updateESPGlow()
-	updateESPLines()
-	updateESPDots()
-	updateESPCircle()
-end)
-
--- Aimbot lock to nearest enemy head
+-- Aimbot: lock camera to nearest enemy head
 RunService.RenderStepped:Connect(function()
 	if aimbotOn then
 		local nearestHead = nil
@@ -304,57 +274,58 @@ RunService.RenderStepped:Connect(function()
 			camera.CFrame = CFrame.new(camera.CFrame.Position, nearestHead.Position)
 		end
 	end
+	updateESPGlow()
+	updateESPLines()
+	updateESPDots()
+	updateESPCircle()
 end)
 
--- Fill ESP tab content
+-- Show ESP tab toggles
 local function ShowESPTab()
 	ClearContainer()
 	local features = {
-		{ name = "ESP Glow", callback = function(state)
+		{name = "ESP Glow", callback = function(state)
 			espGlow = state
 			updateESPGlow()
-		end },
-		{ name = "ESP Line", callback = function(state)
+		end},
+		{name = "ESP Line", callback = function(state)
 			espLine = state
 			updateESPLines()
-		end },
-		{ name = "ESP Middle", callback = function(state)
+		end},
+		{name = "ESP Middle", callback = function(state)
 			espMiddle = state
 			updateESPLines()
-		end },
-		{ name = "ESP Dots", callback = function(state)
-			espDots = state
-			updateESPDots()
-		end },
-		{ name = "ESP Circle", callback = function(state)
-			espCircle = state
-			updateESPCircle()
-		end },
-		{ name = "ESP Rainbow", callback = function(state)
+		end},
+		{name = "ESP Rainbow", callback = function(state)
 			espRainbow = state
 			updateESPGlow()
 			updateESPLines()
 			updateESPDots()
 			updateESPCircle()
-		end },
+		end},
+		{name = "ESP Dots (Balls)", callback = function(state)
+			espDots = state
+			updateESPDots()
+		end},
+		{name = "ESP Circle", callback = function(state)
+			espCircle = state
+			updateESPCircle()
+		end},
 	}
 	for i, feat in ipairs(features) do
-		createToggle(feat.name, (i - 1) * 35, feat.callback)
+		createToggle(feat.name, (i-1)*35, feat.callback)
 	end
-	-- Adjust CanvasSize for scrolling
-	Container.CanvasSize = UDim2.new(0, 0, 0, #features * 35)
 end
 
--- Fill AIM tab content
+-- Show AIM tab toggle
 local function ShowAIMTab()
 	ClearContainer()
 	createToggle("Aimbot", 0, function(state)
 		aimbotOn = state
 	end)
-	Container.CanvasSize = UDim2.new(0, 0, 0, 35)
 end
 
--- Fill VISUAL tab content
+-- Show Visual tab (empty)
 local function ShowVisualTab()
 	ClearContainer()
 	local Label = Instance.new("TextLabel", Container)
@@ -365,20 +336,18 @@ local function ShowVisualTab()
 	Label.BackgroundTransparency = 1
 	Label.Font = Enum.Font.SourceSansBold
 	Label.TextSize = 14
-	Container.CanvasSize = UDim2.new(0, 0, 0, 40)
 end
 
--- About toggle flag
 local aboutActive = false
 
--- Tab button click behavior
+-- Tab buttons behavior
 for name, btn in pairs(tabButtons) do
 	btn.MouseButton1Click:Connect(function()
 		if name == "ABOUT" then
 			if not aboutActive then
-				for _, t in pairs(tabButtons) do
-					if t ~= btn then
-						t.Visible = false
+				for _, tab in pairs(tabButtons) do
+					if tab.Text ~= "ABOUT" then
+						tab.Visible = false
 					end
 				end
 				btn.Text = "BACK"
@@ -386,20 +355,25 @@ for name, btn in pairs(tabButtons) do
 				aboutActive = true
 			else
 				btn.Text = "ABOUT"
-				for _, t in pairs(tabButtons) do
-					t.Visible = true
+				for _, tab in pairs(tabButtons) do
+					tab.Visible = true
 				end
 				ClearContainer()
 				aboutActive = false
 			end
 		else
-			for _, t in pairs(tabButtons) do
-				t.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-				t.Visible = true
+			for _, tab in pairs(tabButtons) do
+				tab.BackgroundColor3 = Color3.fromRGB(40,40,40)
 			end
-			btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+			btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
 			aboutActive = false
 			tabButtons["ABOUT"].Text = "ABOUT"
+			for _, tab in pairs(tabButtons) do
+				if tab.Text ~= "ABOUT" then
+					tab.Visible = true
+				end
+			end
+
 			if name == "ESP HACKES" then
 				ShowESPTab()
 			elseif name == "AIM HACKES" then
@@ -411,16 +385,11 @@ for name, btn in pairs(tabButtons) do
 	end)
 end
 
--- Initially show ESP tab and highlight it
+-- Select ESP tab by default
 tabButtons["ESP HACKES"].BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 ShowESPTab()
 
--- Icon toggles main frame visibility
+-- Icon toggles main menu
 Icon.MouseButton1Click:Connect(function()
 	Main.Visible = not Main.Visible
-end)
-
--- Close button hides main frame
-Close.MouseButton1Click:Connect(function()
-	Main.Visible = false
 end)
